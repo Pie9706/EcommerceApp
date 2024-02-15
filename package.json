@@ -20,6 +20,8 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
+    "build:css": "postcss src/tailwind.css -o src/styles.css",
+    "watch:css": "postcss src/tailwind.css -o src/styles.css --watch",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
