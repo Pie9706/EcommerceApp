@@ -8,6 +8,8 @@ interface Product {
   image: string;
   thumbnail: string;
   qty: number;
+  
+ 
 }
 
 function Ecommerce() {
@@ -32,8 +34,25 @@ function Ecommerce() {
   }
 
   function onClickCart(product: Product) {
-    if (product.qty > 0) {
-      setCartItems([...cartItems, { ...product, qty: 1 }]);
+    const existingItem = cartItems.find((item) => item.id === product.id);
+  
+    if (existingItem) {
+      // Se l'elemento è già presente nel carrello, aumenta solo la quantità
+      setCartItems((prevCartItems) =>
+        prevCartItems.map((item) =>
+          item.id === product.id ? { ...item, qty: item.qty + 1 } : item
+        )
+      );
+      // Decrementa la quantità disponibile nel catalogo
+      setProducts((prevProducts) =>
+        prevProducts.map((p) =>
+          p.id === product.id ? { ...p, qty: p.qty - 1 } : p
+        )
+      );
+    } else {
+      // Altrimenti, aggiungi un nuovo elemento al carrello con qty 1
+      setCartItems((prevCartItems) => [...prevCartItems, { ...product, qty: 1 }]);
+      // Decrementa la quantità disponibile nel catalogo
       setProducts((prevProducts) =>
         prevProducts.map((p) =>
           p.id === product.id ? { ...p, qty: p.qty - 1 } : p
@@ -41,6 +60,7 @@ function Ecommerce() {
       );
     }
   }
+  
 
   function getTotalPrice() {
     return cartItems.reduce((total, item) => total + item.price * item.qty, 0);
@@ -49,9 +69,38 @@ function Ecommerce() {
   function toggleCart() {
     setShowCart(!showCart);
   }
+  function onRemoveFromCart(product: Product) {
+    const existingItem = cartItems.find((item) => item.id === product.id);
+  
+    if (existingItem) {
+      // Se l'elemento è presente nel carrello con qty > 1, decrementa solo la quantità
+      if (existingItem.qty > 1) {
+        setCartItems((prevCartItems) =>
+          prevCartItems.map((item) =>
+            item.id === product.id ? { ...item, qty: item.qty - 1 } : item
+          )
+        );
+      } else {
+        // Se l'elemento ha qty === 1, rimuovilo completamente dal carrello
+        setCartItems((prevCartItems) =>
+          prevCartItems.filter((item) => item.id !== product.id)
+        );
+      }
+  
+      // Incrementa la quantità disponibile nel catalogo
+      setProducts((prevProducts) =>
+        prevProducts.map((p) =>
+          p.id === product.id ? { ...p, qty: p.qty + 1 } : p
+        )
+      );
+    }
+  }
+  
+
 
   return (
     <div id="root" className="container mx-auto p-4">
+      <h1 className="center-text text-3xl font-bold mb-1">Ecommerce</h1>
       <div className="relative">
         <div className="absolute top-0 right-0 p-4">
           <div className="relative inline-block">
@@ -61,6 +110,7 @@ function Ecommerce() {
             >
               {showCart ? "Home" : "Carrello"}({cartItems.length})
             </button>
+            
           </div>
         </div>
       </div>
@@ -69,22 +119,38 @@ function Ecommerce() {
         <div id="cart" className="mt-4">
           <h1 className="text-3xl font-bold mb-2">Your Cart</h1>
           <p className="mb-2">Total Price: ${getTotalPrice()}</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {cartItems.map((item: Product) => (
-              <div key={item.id} className="bg-white p-4 shadow-md rounded-md">
-                <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
-                <img
-                  src={item.image}
-                  alt={item.thumbnail}
-                  className="mt-2 w-full h-32 object-cover"
-                />
-                <p className="mt-2">Quantity: {item.qty}</p>
-                <p className="mt-2">${item.price}</p>
-              </div>
-            ))}
-          </div>
+          <button  className="mt-2 bg-red-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">BUY NOW</button>
+          
+          <div>
+
+          {cartItems.map((item: Product) => (
+          <div key={item.id} className="bg-white p-4 shadow-md rounded-md">
+          <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
+        <img
+            src={item.image}
+            alt={item.thumbnail}
+            className="mt-2 w-full h-32 object-cover sm:w-64 sm:h-64 md:w-72 md:h-72 lg:w-80 lg:h-80"
+    />
+          <p className="mt-2">Quantity: {item.qty}</p>
+          <p className="mt-2">${item.price}</p>
+    
+        <button
+          onClick={() => onRemoveFromCart(item)}
+          className="mt-2 bg-red-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+    >
+      Remove
+        </button>
+  </div>
+))}
+
         </div>
-      ) : (
+        </div>
+      
+        
+      ) 
+
+
+      : (
         <div id="product-list" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
           {products.map((product: Product) => (
             <div key={product.id} className="bg-white p-4 shadow-md rounded-md">
@@ -104,6 +170,7 @@ function Ecommerce() {
               >
                 Add to Cart
               </button>
+              
             </div>
           ))}
         </div>
