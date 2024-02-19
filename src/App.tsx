@@ -9,7 +9,6 @@ interface Product {
   thumbnail: string;
   qty: number;
   
- 
 }
 
 function Ecommerce() {
@@ -46,7 +45,6 @@ function Ecommerce() {
     }
   }
   
-
   function updateCart(updatedCart: Product[]) {
     setCartItems(updatedCart);
     
