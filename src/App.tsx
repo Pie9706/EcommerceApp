@@ -17,8 +17,21 @@ function Ecommerce() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   useEffect(() => {
-    fetchProducts();
+    const storedCart = JSON.parse(localStorage.getItem("cart") || "[]");
+    const storedProducts = JSON.parse(localStorage.getItem("products") || "[]");
+
+    setCartItems(storedCart);
+    setProducts(storedProducts);
+
+    if (storedProducts.length === 0) {
+      fetchProducts();
+    }
   }, []);
+
+  useEffect(() => {
+    saveCartToLocalStorage();
+    saveProductsToLocalStorage();
+  }, [cartItems, products]);
 
   async function fetchProducts() {
     try {
@@ -31,11 +44,34 @@ function Ecommerce() {
       console.error("Error fetching products:", error);
     }
   }
+  
+  function updateCart(updatedCart: Product[]) {
+    setCartItems(updatedCart);
+    
+
+  }
+  function updateProducts(updatedProducts: Product[]) {
+    setProducts(updatedProducts);
+    
+  }
+  function saveCartToLocalStorage() {
+    localStorage.setItem("cart", JSON.stringify(cartItems));
+    
+  }
+  function saveProductsToLocalStorage() {
+    localStorage.setItem("products", JSON.stringify(products));
+    
+  }
+  
 
   function onClickCart(product: Product) {
     const existingItem = cartItems.find((item) => item.id === product.id);
 
     if (existingItem) {
+
+      const updatedCart = cartItems.map((item) =>
+        item.id === product.id ? { ...item, qty: item.qty + 1 } : item
+
       setCartItems((prevCartItems) =>
         prevCartItems.map((item) =>
           item.id === product.id ? { ...item, qty: item.qty + 1 } : item
@@ -45,8 +81,28 @@ function Ecommerce() {
         prevProducts.map((p) =>
           p.id === product.id ? { ...p, qty: p.qty - 1 } : p
         )
+
       );
+  
+      updateCart(updatedCart);
+      updateProducts(decrementProductQty(product));
     } else {
+
+      const updatedCart = [...cartItems, { ...product, qty: 1 }];
+  
+      updateCart(updatedCart);
+      updateProducts(decrementProductQty(product));
+    }
+  }
+  
+  function decrementProductQty(product: Product): Product[] {
+    return products.map((p) =>
+      p.id === product.id ? { ...p, qty: p.qty - 1 } : p
+    );
+  }
+  
+  
+
       setCartItems((prevCartItems) => [
         ...prevCartItems,
         { ...product, qty: 1 },
@@ -58,6 +114,7 @@ function Ecommerce() {
       );
     }
   }
+
 
   function getTotalPrice() {
     return cartItems.reduce((total, item) => total + item.price * item.qty, 0);
@@ -79,28 +136,27 @@ function Ecommerce() {
     const existingItem = cartItems.find((item) => item.id === product.id);
 
     if (existingItem) {
+      let updatedCart: Product[] = [];
       // Se l'elemento è presente nel carrello con qty > 1, decrementa solo la quantità
       if (existingItem.qty > 1) {
-        setCartItems((prevCartItems) =>
-          prevCartItems.map((item) =>
-            item.id === product.id ? { ...item, qty: item.qty - 1 } : item
-          )
+        updatedCart = cartItems.map((item) =>
+          item.id === product.id ? { ...item, qty: item.qty - 1 } : item
         );
       } else {
         // Se l'elemento ha qty === 1, rimuovilo completamente dal carrello
-        setCartItems((prevCartItems) =>
-          prevCartItems.filter((item) => item.id !== product.id)
-        );
+        updatedCart = cartItems.filter((item) => item.id !== product.id);
       }
 
       // Incrementa la quantità disponibile nel catalogo
-      setProducts((prevProducts) =>
-        prevProducts.map((p) =>
-          p.id === product.id ? { ...p, qty: p.qty + 1 } : p
-        )
+      const updatedProducts = products.map((p) =>
+        p.id === product.id ? { ...p, qty: p.qty + 1 } : p
       );
+  
+      setProducts(updatedProducts);
+      setCartItems(updatedCart);
     }
-  }
+  };
+
 
   return (
     <div id="root" className="container mx-auto p-4 relative">
